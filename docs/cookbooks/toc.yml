@@ -1,0 +1,6 @@
+- name: Regex cookbook
+  href: regex.md
+- name: Template cookbook
+  href: templates.md
+- name: Migrating from file_mover
+  href: migrating.md

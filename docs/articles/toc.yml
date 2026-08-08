@@ -1,0 +1,14 @@
+- name: Getting started
+  href: getting-started.md
+- name: Rules explained
+  href: rules.md
+- name: When is a file finished?
+  href: completion.md
+- name: Safety model
+  href: safety.md
+- name: Symlinks back to moved files
+  href: symlinks.md
+- name: Troubleshooting
+  href: troubleshooting.md
+- name: Why not rsync
+  href: rsync.md

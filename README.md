@@ -12,6 +12,9 @@ Successor to the `watchexec` + batch script in `QC4Metabolomics/file_mover`, ada
 - **Copy → read back from the destination → compare hashes → only then delete the source.**
 - Deletions are never propagated. See [Safety model](#safety-model).
 
+📖 **[Full documentation site](https://stanstrup.github.io/MSmover/)** — guide, regex and template
+cookbooks, settings reference and API. Build it locally with `dotnet docfx docs/docfx.json --serve`.
+
 ---
 
 ## Install
@@ -215,9 +218,24 @@ Layout:
 src/MSmover.Core   engine: config, naming, detection, transfer, journal   (no UI, fully testable)
 src/MSmover.App    WinForms: tray, main window, rule editor, preview
 tests/             xUnit, including an acquisition simulator and fault injection
+docs/              docfx site: articles, cookbooks, reference, generated API
 ```
 
 The only runtime package is `System.IO.Hashing` (Microsoft, for xxHash64).
+
+### Documentation
+
+The site is [docfx](https://dotnet.github.io/docfx/) — the same split as pkgdown: hand-written
+articles plus a reference generated from the `///` comments in `MSmover.Core`.
+
+```powershell
+dotnet tool restore                      # docfx is pinned in .config/dotnet-tools.json
+dotnet docfx docs/docfx.json --serve     # http://localhost:8080
+```
+
+Every pattern and template printed in the regex and template cookbooks is asserted by
+`tests/MSmover.Core.Tests/DocumentationExamplesTests.cs`, and CI runs those before publishing — so
+an example that stops being true breaks the build instead of quietly misleading someone.
 
 ## Licence
 

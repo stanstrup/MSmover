@@ -6,3 +6,8 @@ obj/
 artifacts/
 publish/
 TestResults/
+
+# docfx output and generated API metadata. docs/api/index.md is hand-written and IS tracked.
+docs/_site/
+docs/api/*.yml
+docs/api/.manifest

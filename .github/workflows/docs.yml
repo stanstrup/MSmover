@@ -1,0 +1,62 @@
+name: docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Allow one concurrent deployment; a newer commit supersedes an in-flight one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    # docfx reads the project through Roslyn, and MSmover.Core targets net8.0-windows.
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore tools
+        run: dotnet tool restore
+
+      - name: Restore projects
+        run: dotnet restore MSmover.sln
+
+      # The cookbooks' examples are asserted by DocumentationExamplesTests, so a documentation
+      # change that no longer matches the code fails here rather than being published.
+      - name: Verify documented examples
+        run: dotnet test tests/MSmover.Core.Tests/MSmover.Core.Tests.csproj --filter "FullyQualifiedName~DocumentationExamplesTests"
+
+      - name: Build site
+        run: dotnet docfx docs/docfx.json --warningsAsErrors
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/_site
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

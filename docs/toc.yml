@@ -1,0 +1,12 @@
+- name: Guide
+  href: articles/
+  homepage: articles/getting-started.md
+- name: Cookbooks
+  href: cookbooks/
+  homepage: cookbooks/regex.md
+- name: Reference
+  href: reference/
+  homepage: reference/settings.md
+- name: API
+  href: api/
+  homepage: api/index.md
