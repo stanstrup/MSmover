@@ -1,0 +1,52 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Windows-only: the tests exercise Win32 file locking, reparse points and fsutil.
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore MSmover.sln
+
+      - name: Build
+        run: dotnet build MSmover.sln -c Release --no-restore
+
+      - name: Test
+        run: dotnet test tests/MSmover.Core.Tests/MSmover.Core.Tests.csproj -c Release --no-build --logger "console;verbosity=normal"
+
+      - name: Publish single-file exe
+        run: >
+          dotnet publish src/MSmover.App/MSmover.App.csproj
+          -c Release -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -o publish/win-x64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MSmover-win-x64
+          path: publish/win-x64/MSmover.exe
+          if-no-files-found: error
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: publish/win-x64/MSmover.exe
+          generate_release_notes: true
