@@ -73,6 +73,61 @@ function Write-Checksum([string]$Path) {
     return $sha
 }
 
+<#
+    Authenticode signing, if a certificate has been supplied.
+
+    Set MSMOVER_SIGN_PFX_BASE64 (a base64-encoded .pfx) and MSMOVER_SIGN_PASSWORD to enable it;
+    with neither set, the build produces unsigned binaries and says so. That keeps the pipeline
+    working for anyone building from source while letting a release be signed by adding two
+    repository secrets and nothing else.
+
+    Signing has to happen before the checksum is written, and the payload has to be signed before
+    the installer is built, so that the file which ends up on disk after installation is signed
+    too, not just the installer that put it there.
+#>
+$script:SignTool = $null
+$script:PfxPath = $null
+
+function Initialize-Signing {
+    if (-not $env:MSMOVER_SIGN_PFX_BASE64) {
+        Write-Warning "No signing certificate supplied (MSMOVER_SIGN_PFX_BASE64 is not set); binaries will be unsigned."
+        return $false
+    }
+
+    $found = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin' -Recurse -Filter signtool.exe -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -match '\\x64\\' } |
+        Sort-Object FullName -Descending | Select-Object -First 1
+    if (-not $found) {
+        throw "A signing certificate was supplied but signtool.exe could not be found. Install the Windows SDK."
+    }
+
+    $script:SignTool = $found.FullName
+    $script:PfxPath = Join-Path ([IO.Path]::GetTempPath()) "msmover-signing-$([guid]::NewGuid()).pfx"
+    [IO.File]::WriteAllBytes($script:PfxPath, [Convert]::FromBase64String($env:MSMOVER_SIGN_PFX_BASE64))
+    Write-Host "Signing with $($script:SignTool)" -ForegroundColor Cyan
+    return $true
+}
+
+function Invoke-Sign([string]$Path) {
+    if (-not $script:SignTool) { return }
+
+    # RFC 3161 timestamping, so signatures stay valid after the certificate expires.
+    & $script:SignTool sign `
+        /f $script:PfxPath `
+        /p $env:MSMOVER_SIGN_PASSWORD `
+        /fd SHA256 `
+        /tr http://timestamp.digicert.com `
+        /td SHA256 `
+        /d "MSmover" `
+        /du "https://github.com/stanstrup/MSmover" `
+        $Path
+    if ($LASTEXITCODE -ne 0) { throw "signtool failed on $Path with exit code $LASTEXITCODE." }
+}
+
+$signing = Initialize-Signing
+try {
+
+Invoke-Sign $exe
 $hash = Write-Checksum $exe
 
 # The version in the file properties has to match what we were asked to build, otherwise the
@@ -124,6 +179,7 @@ if (-not $SkipInstaller) {
         if ($LASTEXITCODE -ne 0) { throw "makensis failed with exit code $LASTEXITCODE." }
         if (-not (Test-Path $setup)) { throw "makensis reported success but $setupName was not produced." }
 
+        Invoke-Sign $setup
         $setupHash = Write-Checksum $setup
         $setupMb = [math]::Round((Get-Item $setup).Length / 1MB, 1)
         Write-Host ""
@@ -134,5 +190,17 @@ if (-not $SkipInstaller) {
 }
 
 Write-Host ""
+if ($signing) {
+    Write-Host "Binaries are Authenticode signed." -ForegroundColor Green
+} else {
+    Write-Host "Binaries are UNSIGNED. Windows SmartScreen will warn about an unknown publisher." -ForegroundColor Yellow
+}
 Write-Host "Wrote $target" -ForegroundColor Green
 Get-ChildItem $target | ForEach-Object { Write-Host ("  " + $_.Name) }
+
+}
+finally {
+    if ($script:PfxPath -and (Test-Path $script:PfxPath)) {
+        Remove-Item $script:PfxPath -Force -ErrorAction SilentlyContinue
+    }
+}

@@ -24,11 +24,17 @@ From the [latest release](https://github.com/stanstrup/MSmover/releases/latest),
 Both are the same application; the installer just wraps it. Neither needs a .NET runtime.
 
 Windows SmartScreen will warn about an unrecognised publisher because the binaries are not
-code-signed. Each release publishes a `.sha256` alongside every download:
+code-signed. `Unblock-File` on the download avoids the warning; each release also publishes a
+`.sha256` beside every file:
 
 ```powershell
-(Get-FileHash MSmover-0.1.0-win-x64-setup.exe -Algorithm SHA256).Hash
+Unblock-File .\MSmover-0.1.0-win-x64-setup.exe
+(Get-FileHash .\MSmover-0.1.0-win-x64-setup.exe -Algorithm SHA256).Hash
 ```
+
+See [the unsigned-publisher warning](https://stanstrup.github.io/MSmover/articles/signing.html)
+for how to remove it properly. The release pipeline signs automatically once a certificate is
+supplied as two repository secrets.
 
 Upgrading keeps your rules and history — they live in `%APPDATA%\MSmover\`, which the installer
 never touches and the uninstaller only removes if you say yes.

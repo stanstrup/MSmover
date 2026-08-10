@@ -14,12 +14,15 @@ neither needs administrator rights to run.
 
 > [!NOTE]
 > Windows SmartScreen will warn about an unrecognised publisher, because the binaries are not
-> code-signed. Choose **More info → Run anyway**. Every download has a `.sha256` published beside
-> it if you want to check it first:
+> code-signed. Choose **More info → Run anyway**, or run `Unblock-File` on the download first to
+> avoid the warning entirely. Every download has a `.sha256` published beside it:
 >
 > ```powershell
 > (Get-FileHash MSmover-0.1.0-win-x64-setup.exe -Algorithm SHA256).Hash
 > ```
+>
+> See [the unsigned-publisher warning](signing.md) for how to get rid of it properly, on your own
+> machines or for everyone.
 
 First launch creates `%APPDATA%\MSmover\` and shows an empty **Rules** tab.
 

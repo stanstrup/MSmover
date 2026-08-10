@@ -71,6 +71,10 @@ jobs:
       - name: Semantic release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional. Add these two repository secrets and the release is signed; without them
+          # the build still succeeds and produces unsigned binaries. See docs/articles/signing.md.
+          MSMOVER_SIGN_PFX_BASE64: ${{ secrets.MSMOVER_SIGN_PFX_BASE64 }}
+          MSMOVER_SIGN_PASSWORD: ${{ secrets.MSMOVER_SIGN_PASSWORD }}
         run: >
           npx semantic-release
           ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) && '--dry-run --no-ci' || '' }}

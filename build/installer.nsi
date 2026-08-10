@@ -90,11 +90,13 @@ Function ${UN}CloseRunningInstance
   Pop $1   ; output, unused
 
   ${If} $0 == 0
+    ; An unattended install must not stop to ask. /SD is belt and braces for the same reason.
+    IfSilent closeit
     MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
       "${APP_NAME} is running and must be closed to continue.$\n$\n\
        Any transfer in progress will be cancelled. No data is lost: the incomplete copy at the \
        destination is discarded and the source file is left untouched.$\n$\n\
-       Close it now?" IDOK closeit
+       Close it now?" /SD IDOK IDOK closeit
     Abort
     closeit:
     nsExec::ExecToLog 'taskkill /IM "${APP_EXE}" /F'
