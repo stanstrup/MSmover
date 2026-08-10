@@ -2,6 +2,16 @@
 
 All notable changes to MSmover. Generated from the commit history by semantic-release; do not edit by hand.
 
+## [0.1.3](https://github.com/stanstrup/MSmover/compare/v0.1.2...v0.1.3) (2026-08-10)
+
+### Bug fixes
+
+* **build:** keep installer.nsi pure ASCII so it builds on any machine ([c8e6522](https://github.com/stanstrup/MSmover/commit/c8e6522ef4682c3a068c423747ecb46a9eae15d9))
+
+# Changelog
+
+All notable changes to MSmover. Generated from the commit history by semantic-release; do not edit by hand.
+
 ## [0.1.2](https://github.com/stanstrup/MSmover/compare/v0.1.1...v0.1.2) (2026-08-10)
 
 ### Bug fixes
