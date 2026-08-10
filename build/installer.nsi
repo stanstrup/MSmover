@@ -2,8 +2,12 @@
 ;
 ; Per-user by default: installs into %LOCALAPPDATA%\Programs\MSmover and writes only HKCU, so it
 ; needs no administrator rights. That matters on a locked-down instrument PC, and it matches how
-; the application itself runs — inside the logged-in session, where mapped drives exist and where
+; the application itself runs: inside the logged-in session, where mapped drives exist and where
 ; symlink privileges are the user's.
+;
+; Keep this file pure ASCII. Without a byte-order mark makensis reads the script in the machine's
+; ANSI code page, so a stray UTF-8 character builds on one machine and fails on another.
+; build\package.ps1 enforces it.
 ;
 ; Built by build\package.ps1, which supplies the paths and version via /D. Not meant to be
 ; compiled by hand.

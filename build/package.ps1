@@ -164,6 +164,18 @@ if (-not $SkipInstaller) {
         Write-Warning "makensis was not found, so no installer was built. Install NSIS (https://nsis.sourceforge.io) or pass -SkipInstaller to silence this."
     }
     else {
+        $nsi = Join-Path $PSScriptRoot 'installer.nsi'
+
+        # makensis reads a script without a byte-order mark in the machine's ANSI code page, so a
+        # single non-ASCII character can build here and fail there. Catch it deterministically
+        # rather than discovering it on someone else's machine.
+        $offending = [IO.File]::ReadAllText($nsi).ToCharArray() | Where-Object { [int]$_ -gt 127 } | Select-Object -Unique
+        if ($offending) {
+            $shown = ($offending | ForEach-Object { "U+{0:X4}" -f [int]$_ }) -join ', '
+            throw "installer.nsi must be pure ASCII but contains $shown. Replace those characters; " +
+                  "makensis reads a BOM-less script in the local ANSI code page."
+        }
+
         $setupName = "MSmover-$Version-win-x64-setup.exe"
         $setup = Join-Path $target $setupName
         Write-Host ""
@@ -175,7 +187,7 @@ if (-not $SkipInstaller) {
             "/DPAYLOAD=$exe" `
             "/DOUTFILE=$setup" `
             "/DROOT=$repo" `
-            (Join-Path $PSScriptRoot 'installer.nsi')
+            $nsi
         if ($LASTEXITCODE -ne 0) { throw "makensis failed with exit code $LASTEXITCODE." }
         if (-not (Test-Path $setup)) { throw "makensis reported success but $setupName was not produced." }
 
