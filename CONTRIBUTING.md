@@ -81,11 +81,28 @@ npm run release:dry                  # what would be released, and as what versi
 ```powershell
 dotnet test tests\MSmover.Core.Tests\MSmover.Core.Tests.csproj
 powershell -File build\package.ps1 -Version 0.0.0-local
+powershell -File build\clean.ps1 -WhatIf     # see what build output has accumulated
 ```
 
 `package.ps1` produces both the portable executable and the NSIS installer in `release\`, with a
 SHA-256 checksum for each. It needs [NSIS](https://nsis.sourceforge.io) on the PATH; without it,
 pass `-SkipInstaller` to build the portable executable only.
+
+### Which executable am I running?
+
+A working tree ends up with several copies of the application, because a self-contained publish is
+~70 MB and `bin`, `obj`, `publish` and `release` each keep one. `build\clean.ps1` removes them all
+(and never touches `%APPDATA%\MSmover`).
+
+Only release builds carry a real version number. Anything built any other way reports
+**`0.0.0-dev`** in the title bar and in Settings → About, so a development build cannot be mistaken
+for a release in a bug report. If a screenshot says `0.0.0-dev`, it was not built by the release
+pipeline.
+
+> [!CAUTION]
+> Every copy reads the same `%APPDATA%\MSmover\config.json`. Launching an old build from a `bin`
+> folder will happily run your real rules against real data. Check the title bar version before
+> assuming which one you started, and keep a rule in dry run while developing.
 
 ## Tests
 

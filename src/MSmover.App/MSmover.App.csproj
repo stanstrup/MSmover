@@ -11,7 +11,12 @@
     <AssemblyName>MSmover</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>msmover.ico</ApplicationIcon>
-    <Version>0.1.0</Version>
+    <!--
+      Deliberately not a real version number. Release builds are stamped from the git tag by
+      build\package.ps1; anything built any other way is a development build and should say so
+      rather than impersonating a release in the title bar and in bug reports.
+    -->
+    <Version>0.0.0-dev</Version>
     <Product>MSmover</Product>
     <Description>Watches an LC-MS acquisition folder and moves finished .raw files to a network drive, with verification.</Description>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
