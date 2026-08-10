@@ -77,7 +77,12 @@ not modified — fix or remove it and restart.
 ## `journal.jsonl`
 
 One JSON object per line. This is the audit trail, and also how MSmover knows what it has already
-transferred so a restart does not re-report everything.
+transferred.
+
+That knowledge is only ever used together with a check that the file is **still at the target**: a
+source is skipped while its earlier transfer is sitting where it was put, and becomes eligible
+again the moment that file is deleted. A file at the target that MSmover has no record of putting
+there is never skipped quietly — it is reported as a clash.
 
 ```json
 {"Ts":"2026-03-14T15:12:01.1+01:00","Event":"start","Rule":"Thermo raw","Source":"D:\\Xcalibur\\Data\\MSTEST_A01_003.raw","Target":"\\\\storage\\ms\\incoming\\MSTEST\\MSTEST.pro\\Data\\MSTEST_A01_003.raw","Part":"\\\\storage\\ms\\incoming\\MSTEST\\MSTEST.pro\\Data\\MSTEST_A01_003.raw.msmover-part","Size":1288490188,"Mode":"MOVE"}

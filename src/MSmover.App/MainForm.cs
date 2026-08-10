@@ -153,7 +153,10 @@ public sealed class MainForm : Form
         _queueList.DrawItem += (_, _) => { };
         _queueList.DrawSubItem += DrawQueueSubItem;
 
+        _queueList.MultiSelect = true;
+
         var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, Padding = new Padding(0, 8, 0, 0) };
+        buttons.Controls.Add(Button("Retry selected", RetrySelected));
         buttons.Controls.Add(Button("Clear finished", () =>
         {
             foreach (var r in _service.Runners) r.ClearRecent();
@@ -570,6 +573,42 @@ public sealed class MainForm : Form
             MessageBox.Show($"Could not save the configuration:\n\n{ex.Message}",
                 "MSmover", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+    }
+
+    private void RetrySelected()
+    {
+        var chosen = _queueList.SelectedItems.Cast<ListViewItem>()
+            .Select(i => i.Tag as QueueItem)
+            .Where(i => i is not null)
+            .Cast<QueueItem>()
+            .ToList();
+
+        if (chosen.Count == 0)
+        {
+            MessageBox.Show(
+                "Select one or more files in the queue first.\n\n" +
+                "Retry puts a file back in the queue whatever was decided about it before — " +
+                "useful after fixing a name, resolving a clash at the target, or deleting a target " +
+                "file you want transferred again.",
+                "MSmover", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        var blocked = chosen.Count(i => i.State == ItemState.Blocked);
+        if (blocked > 0)
+        {
+            var answer = MessageBox.Show(
+                $"{blocked} of the selected file(s) are blocked because something already exists at " +
+                "the target.\n\nRetrying will not overwrite anything: if the target file is still " +
+                "there they will simply block again. Remove or rename the target file first.\n\n" +
+                "Retry anyway?",
+                "MSmover", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+            if (answer != DialogResult.Yes) return;
+        }
+
+        var count = _service.Retry(chosen);
+        RefreshQueue();
+        _statusLabel.Text = $"{count} file(s) queued again.";
     }
 
     private void OpenSelectedTargetFolder()

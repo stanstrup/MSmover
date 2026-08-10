@@ -96,11 +96,31 @@ MSmover is long-path aware, but downstream tools may not be. If something else f
 archived files, shorten the template — `{t1}\{t1}.pro\Data\{filename}` under a deep UNC path adds
 up quickly.
 
+## A file was transferred before and is not picked up again
+
+Expected, as long as the earlier copy is **still at the target**. A file is skipped only while a
+transfer of it is still sitting where it was put; the log says so once per session:
+
+```text
+INFO  Thermo raw | 12 file(s) were already transferred by this rule and are still present at the
+                   target, so they were skipped.
+```
+
+Three ways to make it transfer again:
+
+* **Delete it at the target.** It becomes eligible on the next scan, with no other action. This is
+  the usual case when re-running a test.
+* **Select it on the Queue tab and press Retry selected.** Note this does not overwrite: if the
+  target file is still there, the file simply reports as blocked.
+* **Scan now**, which re-evaluates every file for the rule.
+
+Renaming the rule has the same effect, because the journal is keyed on the rule name — but then
+every file still at the target is reported as a clash, so it is a blunt instrument.
+
 ## Files reappear after "Scan now"
 
-Expected. **Scan now** deliberately clears the "already handled" list so previously skipped,
-blocked or failed files are re-evaluated. In copy mode the source is still there, so already-copied
-files will be re-reported as blocked once, then settle.
+Expected. **Scan now** re-evaluates everything, including files previously skipped, blocked or
+given up on. Anything still present at the target settles back to being skipped quietly.
 
 ## The log is too quiet or too noisy
 

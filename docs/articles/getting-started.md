@@ -111,7 +111,8 @@ which source files start being deleted — after verification, but deleted nonet
 | Want to… | Do this |
 |---|---|
 | Stop transfers for a moment | **Pause** on the toolbar or the tray menu. Discovery keeps running; the in-flight file finishes. |
-| Force a re-check | **Scan now**. This also clears the "already handled" list, so previously skipped, blocked or failed files get a fresh evaluation. |
+| Force a re-check | **Scan now** — re-evaluates everything from scratch, including files previously skipped, blocked or given up on. |
+| Transfer one file again | Select it on the **Queue** tab and press **Retry selected**. Or just delete it at the target: it becomes eligible again by itself. |
 | See why a file is sitting there | **Queue** tab, *Detail* column — it names the check that is holding it. |
 | Stop everything writing, immediately | **Global dry run** on the toolbar. It overrides every rule. |
 | Read the history | **Log** tab, or `%APPDATA%\MSmover\logs\`. |

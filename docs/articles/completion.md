@@ -83,8 +83,8 @@ So a periodic **full rescan** runs regardless, every `RescanSeconds` (default 30
 overflow triggers an immediate rescan and a warning in the log. On startup, a full scan runs first,
 which is what picks up the backlog.
 
-You can force one at any time with **Scan now**. That also clears the "already handled" list, so
-files previously skipped, blocked or given up on are re-evaluated.
+You can force one at any time with **Scan now**, which re-evaluates everything from scratch: files
+previously skipped, blocked or given up on all get a fresh look.
 
 ## Tuning
 

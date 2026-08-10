@@ -34,11 +34,25 @@ public sealed class RuleRunner : IDisposable
     private readonly ConcurrentQueue<string> _incoming = new();
 
     /// <summary>
-    /// Paths already dealt with, so a rescan does not re-queue them. Seeded from the journal at
-    /// start-up, which is what stops copy mode re-reporting "target exists" for everything it has
-    /// ever copied, every time the app restarts. Cleared by an explicit "Scan now".
+    /// Paths dealt with during this session, so a rescan does not re-report them every few minutes.
+    /// Session-scoped only: a restart re-evaluates everything, and "Scan now" clears it.
     /// </summary>
     private readonly ConcurrentDictionary<string, string> _suppressed = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// source|target pairs this rule has previously transferred, read from the journal.
+    ///
+    /// This is only ever consulted together with a check that the target file is still there. That
+    /// combination is what distinguishes "we already did this one" (skip quietly) from "something
+    /// else is sitting at that name" (surface it as Blocked). Crucially it is not a memory of
+    /// having handled a source path: deleting the file at the target makes the source eligible
+    /// again, which is the behaviour you want when re-running a test or recovering an archive.
+    /// </summary>
+    private readonly HashSet<string> _alreadyAtTarget = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object _alreadyAtTargetGate = new();
+
+    private int _skippedAsAlreadyPresent;
+    private bool _reportedInitialSkipCount;
 
     private FileSystemWatcher? _watcher;
     private CancellationTokenSource? _cts;
@@ -67,8 +81,15 @@ public sealed class RuleRunner : IDisposable
 
     public IReadOnlyList<QueueItem> Snapshot()
     {
-        var live = _items.Values.Select(i => i.Snapshot());
-        var recent = _recent.ToArray().Select(i => i.Snapshot());
+        var live = _items.Values.Select(i => i.Snapshot()).ToList();
+
+        // A path that is live again (retried, or rediscovered) must not also appear as its old
+        // finished entry, or the queue shows the same file twice in two different states.
+        var livePaths = new HashSet<string>(live.Select(i => i.Path), StringComparer.OrdinalIgnoreCase);
+        var recent = _recent.ToArray()
+            .Where(i => !livePaths.Contains(i.Path))
+            .Select(i => i.Snapshot());
+
         return live.Concat(recent).ToList();
     }
 
@@ -100,7 +121,7 @@ public sealed class RuleRunner : IDisposable
 
         if (!PreflightSymlink()) return;
 
-        SeedSuppressionFromJournal();
+        LoadAlreadyTransferred();
 
         Fault = "";
         _cts = new CancellationTokenSource();
@@ -173,29 +194,65 @@ public sealed class RuleRunner : IDisposable
     }
 
     /// <summary>
-    /// An explicit "Scan now" also clears the suppression list, so anything previously skipped,
-    /// blocked or given up on gets a fresh evaluation once the underlying problem is fixed.
+    /// "Scan now": forget everything this session decided, re-read what has previously been
+    /// transferred, and rescan. Anything skipped, blocked or given up on is evaluated afresh.
     /// </summary>
     public void RequestScan()
     {
         _suppressed.Clear();
         ClearRecent();
-        SeedSuppressionFromJournal();
+        LoadAlreadyTransferred();
+        _skippedAsAlreadyPresent = 0;
+        _reportedInitialSkipCount = false;
         _rescanRequested = true;
     }
 
-    private void SeedSuppressionFromJournal()
+    /// <summary>Force one file back into the queue, ignoring anything decided about it before.</summary>
+    public void Retry(string path)
+    {
+        _suppressed.TryRemove(path, out _);
+        _items.TryRemove(path, out _);
+        lock (_alreadyAtTargetGate)
+        {
+            _alreadyAtTarget.RemoveWhere(k => k.StartsWith(path + "|", StringComparison.OrdinalIgnoreCase));
+        }
+        _gate.Forget(path);
+        _incoming.Enqueue(path);
+        _log.Info($"{Path.GetFileName(path)}: queued again by request.", Rule.Name);
+    }
+
+    private void LoadAlreadyTransferred()
     {
         try
         {
-            foreach (var r in _journal.ReadAll())
-                if (r.Event == "done" && r.Rule == Rule.Name && !string.IsNullOrEmpty(r.Source))
-                    _suppressed[r.Source] = "already transferred (from journal)";
+            var records = _journal.ReadAll()
+                .Where(r => r.Event == "done" && r.Rule == Rule.Name &&
+                            !string.IsNullOrEmpty(r.Source) && !string.IsNullOrEmpty(r.Target))
+                .Select(r => TransferKey(r.Source, r.Target));
+
+            lock (_alreadyAtTargetGate)
+            {
+                _alreadyAtTarget.Clear();
+                foreach (var key in records) _alreadyAtTarget.Add(key);
+            }
         }
         catch (Exception ex)
         {
-            _log.Debug($"Could not read the journal for suppression state: {ex.Message}", Rule.Name);
+            // Worst case we re-queue something and it reports as Blocked, which is safe.
+            _log.Debug($"Could not read the journal: {ex.Message}", Rule.Name);
         }
+    }
+
+    private static string TransferKey(string source, string target) => source + "|" + target;
+
+    private bool WasTransferredHere(string source, string target)
+    {
+        lock (_alreadyAtTargetGate) return _alreadyAtTarget.Contains(TransferKey(source, target));
+    }
+
+    private void RememberTransferred(string source, string target)
+    {
+        lock (_alreadyAtTargetGate) _alreadyAtTarget.Add(TransferKey(source, target));
     }
 
     public void Dispose()
@@ -244,6 +301,7 @@ public sealed class RuleRunner : IDisposable
     private void FullScan()
     {
         _lastFullScan = DateTimeOffset.UtcNow;
+        Interlocked.Exchange(ref _skippedAsAlreadyPresent, 0);
         try
         {
             var options = new EnumerationOptions
@@ -270,6 +328,18 @@ public sealed class RuleRunner : IDisposable
             }
 
             _gate.Retain(_items.Keys.ToList());
+
+            // Said once, after the first scan of a session. Without it, a source folder full of
+            // files that have all been transferred already looks like a rule that has stopped
+            // noticing anything.
+            var skipped = Volatile.Read(ref _skippedAsAlreadyPresent);
+            if (!_reportedInitialSkipCount && skipped > 0)
+            {
+                _reportedInitialSkipCount = true;
+                _log.Info($"{skipped} file(s) were already transferred by this rule and are still " +
+                          $"present at the target, so they were skipped. Delete a file at the target " +
+                          $"to have it transferred again, or use Retry on the Queue tab.", Rule.Name);
+            }
         }
         catch (Exception ex)
         {
@@ -321,6 +391,17 @@ public sealed class RuleRunner : IDisposable
             item.Detail = map.Reason;
             if (_items.TryAdd(path, item))
                 _log.Warn($"{Path.GetFileName(path)}: {map.Reason}", Rule.Name);
+            return;
+        }
+
+        // Already transferred by this rule AND still sitting at the target: nothing to do, and
+        // saying so every few minutes would drown the log. Delete the target file and it becomes
+        // eligible again on the next scan. A file at the target that we have no record of putting
+        // there is NOT skipped here: it is queued so it surfaces as Blocked and gets a warning.
+        if (WasTransferredHere(path, map.FullTarget!) && File.Exists(LongPath.Prefix(map.FullTarget!)))
+        {
+            Interlocked.Increment(ref _skippedAsAlreadyPresent);
+            _log.Debug($"{Path.GetFileName(path)}: already transferred and still present at the target, skipping.", Rule.Name);
             return;
         }
 
@@ -445,6 +526,12 @@ public sealed class RuleRunner : IDisposable
             switch (outcome.Status)
             {
                 case TransferStatus.Transferred:
+                    RememberTransferred(item.Path, map.FullTarget!);
+                    item.State = ItemState.Done;
+                    item.BytesDone = item.Size;
+                    Retire(item);
+                    break;
+
                 case TransferStatus.WouldTransfer:
                     item.State = ItemState.Done;
                     item.BytesDone = item.Size;

@@ -10,7 +10,7 @@ Rules are edited in **Rules → Add rule… / Edit…** and stored in `%APPDATA%
 
 | Setting | Default | Notes |
 |---|---|---|
-| **Name** | — | Appears in the log and the Queue tab. Also available as `{rulename}`. Changing it resets the "already transferred" memory, which is keyed on the name. |
+| **Name** | — | Appears in the log and the Queue tab. Also available as `{rulename}`. The journal is keyed on it, so renaming a rule makes it forget which files it has transferred; they are re-evaluated, and any still present at the target are reported as clashes. |
 | **Enabled** | off | New rules start disabled on purpose. |
 | **Dry run** | **on** | Report only. Overridden by global dry run, never the other way round. |
 

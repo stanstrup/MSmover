@@ -112,7 +112,23 @@ public sealed class MoverService : IDisposable
         lock (_gate)
         {
             foreach (var r in _runners) r.RequestScan();
-            Log.Info("Manual scan requested for all rules.");
+            Log.Info("Manual scan requested for all rules. Everything is re-evaluated from scratch.");
+        }
+    }
+
+    /// <summary>Puts specific files back in the queue, whatever was previously decided about them.</summary>
+    public int Retry(IEnumerable<QueueItem> items)
+    {
+        lock (_gate)
+        {
+            var count = 0;
+            foreach (var group in items.GroupBy(i => i.RuleName, StringComparer.Ordinal))
+            {
+                var runner = _runners.FirstOrDefault(r => r.Rule.Name == group.Key);
+                if (runner is null) continue;
+                foreach (var item in group) { runner.Retry(item.Path); count++; }
+            }
+            return count;
         }
     }
 

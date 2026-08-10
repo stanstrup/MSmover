@@ -207,8 +207,10 @@ link never touches the file it points at.
 %APPDATA%\MSmover\logs\              rolling daily logs, 14-day retention by default
 ```
 
-The journal is also how the app knows what it has already transferred, so restarting does not
-re-report every file it has ever copied. **Scan now** clears that and re-evaluates everything.
+The journal records what has already been transferred. A file is skipped only while a previous
+transfer of it is **still present at the target** — delete the file at the target and the source
+becomes eligible again on the next scan. **Scan now** re-evaluates everything immediately, and
+**Retry selected** on the Queue tab forces individual files back into the queue.
 
 Set **Index file** on a rule to also append a TSV of completed transfers at the target root.
 
