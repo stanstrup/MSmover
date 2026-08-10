@@ -2,6 +2,16 @@
 
 All notable changes to MSmover. Generated from the commit history by semantic-release; do not edit by hand.
 
+## [0.1.1](https://github.com/stanstrup/MSmover/compare/v0.1.0...v0.1.1) (2026-08-10)
+
+### Bug fixes
+
+* **build:** do not prompt during a silent install, and support code signing ([d2d4f6f](https://github.com/stanstrup/MSmover/commit/d2d4f6f73fb39b540f489565cb910158c36ef2be))
+
+# Changelog
+
+All notable changes to MSmover. Generated from the commit history by semantic-release; do not edit by hand.
+
 ## [0.1.0](https://github.com/stanstrup/MSmover/compare/v0.0.0...v0.1.0) (2026-08-10)
 
 ### Features
