@@ -80,69 +80,29 @@ VIAddVersionKey "FileDescription" "${APP_NAME} ${VERSION} installer"
 ; Cancelling is safe: MSmover discards an incomplete destination file and never touches the
 ; source until a copy has been verified.
 ; ---------------------------------------------------------------------------------------------
+; Piping tasklist through find means the exit code alone answers "is it running?" -- 0 when a
+; line matched, 1 when none did. That avoids a string helper, which matters because a function
+; called from the uninstaller has to be a separate "un." copy of itself.
 !macro CloseRunningInstance UN
 Function ${UN}CloseRunningInstance
-  nsExec::ExecToStack 'cmd /c tasklist /FI "IMAGENAME eq ${APP_EXE}" /NH'
-  Pop $0
-  Pop $1
-  ${If} $1 != ""
-    ${StrContains} $2 "${APP_EXE}" $1
-    ${If} $2 != ""
-      MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
-        "${APP_NAME} is running and must be closed to continue.$\n$\n\
-         Any transfer in progress will be cancelled. No data is lost: the incomplete copy at the \
-         destination is discarded and the source file is left untouched.$\n$\n\
-         Close it now?" IDOK closeit
-      Abort "Installation cancelled: ${APP_NAME} is still running."
-      closeit:
-      nsExec::ExecToLog 'taskkill /IM "${APP_EXE}" /F'
-      Pop $0
-      Sleep 1200
-    ${EndIf}
+  nsExec::ExecToStack 'cmd /c tasklist /FI "IMAGENAME eq ${APP_EXE}" /NH | find /I "${APP_EXE}"'
+  Pop $0   ; exit code, or "error" if the command could not be run at all
+  Pop $1   ; output, unused
+
+  ${If} $0 == 0
+    MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
+      "${APP_NAME} is running and must be closed to continue.$\n$\n\
+       Any transfer in progress will be cancelled. No data is lost: the incomplete copy at the \
+       destination is discarded and the source file is left untouched.$\n$\n\
+       Close it now?" IDOK closeit
+    Abort
+    closeit:
+    nsExec::ExecToLog 'taskkill /IM "${APP_EXE}" /F'
+    Pop $0
+    Sleep 1500
   ${EndIf}
 FunctionEnd
 !macroend
-
-; Minimal substring helper so the tasklist check does not need a plugin.
-!define StrContains "!insertmacro StrContains"
-!macro StrContains OUT NEEDLE HAYSTACK
-  Push "${HAYSTACK}"
-  Push "${NEEDLE}"
-  Call StrContainsFunc
-  Pop "${OUT}"
-!macroend
-
-Function StrContainsFunc
-  Exch $R0 ; needle
-  Exch
-  Exch $R1 ; haystack
-  Push $R2
-  Push $R3
-  Push $R4
-
-  StrLen $R2 $R0
-  StrCpy $R3 0
-  StrCpy $R4 ""
-
-  loop:
-    StrCpy $R4 $R1 $R2 $R3
-    StrCmp $R4 "" done
-    StrCmp $R4 $R0 found
-    IntOp $R3 $R3 + 1
-    Goto loop
-
-  found:
-    StrCpy $R4 $R0
-    Goto done
-
-  done:
-    StrCpy $R0 $R4
-    Pop $R4
-    Pop $R3
-    Pop $R2
-    Pop $R1
-    Exch $R0
-FunctionEnd
 
 !insertmacro CloseRunningInstance ""
 !insertmacro CloseRunningInstance "un."
@@ -157,7 +117,7 @@ Section "${APP_NAME} (required)" SEC_APP
 
   SetOutPath "$INSTDIR"
   File /oname=${APP_EXE} "${PAYLOAD}"
-  File "/oname=LICENSE.txt" "${ROOT}\LICENSE"
+  File /oname=LICENSE.txt "${ROOT}\LICENSE"
 
   WriteRegStr HKCU "Software\${APP_NAME}" "InstallDir" "$INSTDIR"
   WriteRegStr HKCU "Software\${APP_NAME}" "Version" "${VERSION}"
