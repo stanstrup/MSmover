@@ -2,6 +2,16 @@
 
 All notable changes to MSmover. Generated from the commit history by semantic-release; do not edit by hand.
 
+## [0.1.4](https://github.com/stanstrup/MSmover/compare/v0.1.3...v0.1.4) (2026-08-10)
+
+### Bug fixes
+
+* **app:** stop development builds reporting themselves as a released version ([8400733](https://github.com/stanstrup/MSmover/commit/84007330dd1cc144a84d21b5ad72b8256103c826))
+
+# Changelog
+
+All notable changes to MSmover. Generated from the commit history by semantic-release; do not edit by hand.
+
 ## [0.1.3](https://github.com/stanstrup/MSmover/compare/v0.1.2...v0.1.3) (2026-08-10)
 
 ### Bug fixes
