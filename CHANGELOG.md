@@ -2,6 +2,16 @@
 
 All notable changes to MSmover. Generated from the commit history by semantic-release; do not edit by hand.
 
+## [0.1.2](https://github.com/stanstrup/MSmover/compare/v0.1.1...v0.1.2) (2026-08-10)
+
+### Bug fixes
+
+* **core:** re-transfer a file once its copy at the target is gone ([75c4c47](https://github.com/stanstrup/MSmover/commit/75c4c47da5dc247607b8bbd5dc91b2869ba7b35a))
+
+# Changelog
+
+All notable changes to MSmover. Generated from the commit history by semantic-release; do not edit by hand.
+
 ## [0.1.1](https://github.com/stanstrup/MSmover/compare/v0.1.0...v0.1.1) (2026-08-10)
 
 ### Bug fixes
