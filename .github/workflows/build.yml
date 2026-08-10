@@ -1,23 +1,51 @@
 name: build
 
+# CI only. Releases are cut by release.yml from a v* tag, so that this workflow never
+# publishes anything as a side effect of an ordinary push.
 on:
   push:
     branches: [main]
-    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
 jobs:
   build:
-    # Windows-only: the tests exercise Win32 file locking, reparse points and fsutil.
     runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install tooling
+        run: npm ci
+
+      # Commit messages decide the next version number and the changelog, so a malformed one is
+      # a build failure rather than something noticed three releases later.
+      - name: Lint commit messages
+        shell: pwsh
+        run: |
+          $from = if ('${{ github.event_name }}' -eq 'pull_request') {
+            '${{ github.event.pull_request.base.sha }}'
+          } else {
+            '${{ github.event.before }}'
+          }
+          # A new branch reports an all-zero "before"; there is nothing to compare against.
+          if (-not $from -or $from -match '^0+$') {
+            Write-Host 'No previous commit to compare against; linting the most recent commit only.'
+            npx commitlint --last --verbose
+          } else {
+            npx commitlint --from $from --to '${{ github.sha }}' --verbose
+          }
 
       - name: Restore
         run: dotnet restore MSmover.sln
@@ -28,6 +56,8 @@ jobs:
       - name: Test
         run: dotnet test tests/MSmover.Core.Tests/MSmover.Core.Tests.csproj -c Release --no-build --logger "console;verbosity=normal"
 
+      # Proves the single-file publish still works on every push, so a release tag never
+      # discovers a packaging problem for the first time.
       - name: Publish single-file exe
         run: >
           dotnet publish src/MSmover.App/MSmover.App.csproj
@@ -40,13 +70,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MSmover-win-x64
+          name: MSmover-win-x64-ci
           path: publish/win-x64/MSmover.exe
           if-no-files-found: error
-
-      - name: Attach to release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: publish/win-x64/MSmover.exe
-          generate_release_notes: true
+          retention-days: 14

@@ -1,0 +1,76 @@
+name: release
+
+# semantic-release decides whether a release is due, and what version it gets, from the
+# Conventional Commit messages on main. Nothing is tagged or published by hand.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Work out what would be released without publishing anything'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    # Windows because the test suite exercises Win32 file locking and reparse points, and because
+    # makensis and the single-file publish both run here.
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # semantic-release reads the whole history to work out the next version, and manages
+          # its own credentials for the tag and changelog push.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install release tooling
+        run: npm ci
+
+      - name: Verify NSIS is available
+        shell: pwsh
+        run: |
+          $makensis = Get-Command makensis -ErrorAction SilentlyContinue
+          if (-not $makensis) {
+            $candidate = Join-Path ${env:ProgramFiles(x86)} 'NSIS'
+            if (Test-Path (Join-Path $candidate 'makensis.exe')) {
+              Add-Content $env:GITHUB_PATH $candidate
+              Write-Host "Added $candidate to PATH"
+            } else {
+              Write-Host 'NSIS not present on the runner image; installing.'
+              choco install nsis --no-progress -y
+              Add-Content $env:GITHUB_PATH $candidate
+            }
+          } else {
+            Write-Host "makensis: $($makensis.Source)"
+          }
+
+      - name: Test
+        run: dotnet test tests/MSmover.Core.Tests/MSmover.Core.Tests.csproj -c Release --logger "console;verbosity=normal"
+
+      - name: Semantic release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          npx semantic-release
+          ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) && '--dry-run --no-ci' || '' }}

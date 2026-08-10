@@ -2,10 +2,30 @@
 
 ## Install
 
-Copy `MSmover.exe` anywhere on the instrument PC and run it. There is nothing to install: it is a
-self-contained .NET 8 build, so it needs no runtime, and it runs as a normal user.
+From the [latest release](https://github.com/stanstrup/MSmover/releases/latest), take either:
+
+| Download | Use it when |
+|---|---|
+| `MSmover-<version>-win-x64-setup.exe` | Normal case. Per-user install, so **no administrator rights**: it goes to `%LOCALAPPDATA%\Programs\MSmover`, adds a Start Menu entry and an uninstaller, and offers to start at login. |
+| `MSmover-<version>-win-x64.exe` | You want no installer at all. Put it anywhere and run it. |
+
+Both are the same self-contained .NET 8 application; neither needs a runtime installed, and
+neither needs administrator rights to run.
+
+> [!NOTE]
+> Windows SmartScreen will warn about an unrecognised publisher, because the binaries are not
+> code-signed. Choose **More info → Run anyway**. Every download has a `.sha256` published beside
+> it if you want to check it first:
+>
+> ```powershell
+> (Get-FileHash MSmover-0.1.0-win-x64-setup.exe -Algorithm SHA256).Hash
+> ```
 
 First launch creates `%APPDATA%\MSmover\` and shows an empty **Rules** tab.
+
+Upgrading is safe: quit from the tray, install or copy the new version over the old one, start it
+again. Rules, logs and the transfer journal live in `%APPDATA%\MSmover\`, which the installer
+never touches and the uninstaller removes only if you explicitly say yes.
 
 > [!TIP]
 > Turn on **Settings → Start MSmover automatically when I log in**. It deliberately runs inside

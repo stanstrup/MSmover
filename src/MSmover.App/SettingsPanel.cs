@@ -91,6 +91,17 @@ public sealed class SettingsPanel : UserControl
             Margin = new Padding(0, 4, 0, 8)
         });
 
+        Ui.Section(t, "About");
+        Ui.Full(t, new Label
+        {
+            Text = $"MSmover {AppInfo.Version}\n{Program.ExecutablePath}",
+            AutoSize = true, ForeColor = Color.Gray, Font = new Font("Consolas", 8.5f),
+            Margin = new Padding(0, 2, 0, 8)
+        });
+        Ui.Full(t, FlowOf(
+            MainForm.Button("Copy version info", CopyVersionInfo),
+            MainForm.Button("Releases and documentation", () => OpenUrl("https://github.com/stanstrup/MSmover"))));
+
         Ui.Section(t, "");
         Ui.Full(t, FlowOf(MainForm.Button("Apply settings", Apply)));
 
@@ -154,6 +165,48 @@ public sealed class SettingsPanel : UserControl
         _service.Log.MinimumLevel = c.LogLevel;
         _service.Reload(c);
         MessageBox.Show("Settings applied.", "MSmover", MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+
+    /// <summary>Everything a bug report should start with, in one clipboard paste.</summary>
+    private void CopyVersionInfo()
+    {
+        var eval = Core.Transfer.SymlinkService.QueryEvaluation();
+        var text = string.Join(Environment.NewLine,
+            $"MSmover        {AppInfo.Version}",
+            $"Executable     {Program.ExecutablePath}",
+            $"OS             {Environment.OSVersion.VersionString} ({Environment.MachineName})",
+            $".NET           {Environment.Version}",
+            $"Rules          {_service.Config.Rules.Count} ({_service.Config.Rules.Count(r => r.Enabled)} enabled)",
+            $"Global dry run {_service.Config.GlobalDryRun}",
+            $"Paused         {_service.Config.Paused}",
+            $"Developer Mode {Core.Transfer.SymlinkService.IsDeveloperModeEnabled()}",
+            $"Elevated       {Core.Transfer.SymlinkService.IsElevated()}",
+            $"Symlink L2R    {eval.L2R}");
+
+        try
+        {
+            Clipboard.SetText(text);
+            MessageBox.Show("Version information copied to the clipboard.", "MSmover",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Could not copy to the clipboard: {ex.Message}\n\n{text}",
+                "MSmover", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+    }
+
+    private static void OpenUrl(string url)
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Could not open {url}:\n\n{ex.Message}", "MSmover",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
     }
 
     private void RefreshSymlinkStatus()

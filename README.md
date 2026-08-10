@@ -9,8 +9,29 @@ deleted.
 - **Copy → read back from the destination → compare hashes → only then delete the source.**
 - Deletions are never propagated. See [Safety model](#safety-model).
 
-📖 **[Full documentation site](https://stanstrup.github.io/MSmover/)** — guide, regex and template
-cookbooks, settings reference and API. Build it locally with `dotnet docfx docs/docfx.json --serve`.
+📖 **[Documentation](https://stanstrup.github.io/MSmover/)** ·
+📦 **[Download](https://github.com/stanstrup/MSmover/releases/latest)**
+
+## Install
+
+From the [latest release](https://github.com/stanstrup/MSmover/releases/latest), either:
+
+- **`MSmover-<version>-win-x64-setup.exe`** — installer. Per-user, so no administrator rights:
+  it installs to `%LOCALAPPDATA%\Programs\MSmover`, adds a Start Menu entry and an uninstaller,
+  and offers to start MSmover at login.
+- **`MSmover-<version>-win-x64.exe`** — the portable executable. Put it anywhere and run it.
+
+Both are the same application; the installer just wraps it. Neither needs a .NET runtime.
+
+Windows SmartScreen will warn about an unrecognised publisher because the binaries are not
+code-signed. Each release publishes a `.sha256` alongside every download:
+
+```powershell
+(Get-FileHash MSmover-0.1.0-win-x64-setup.exe -Algorithm SHA256).Hash
+```
+
+Upgrading keeps your rules and history — they live in `%APPDATA%\MSmover\`, which the installer
+never touches and the uninstaller only removes if you say yes.
 
 ---
 

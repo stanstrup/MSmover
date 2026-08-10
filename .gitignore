@@ -11,3 +11,7 @@ TestResults/
 docs/_site/
 docs/api/*.yml
 docs/api/.manifest
+
+# Release tooling
+node_modules/
+release/

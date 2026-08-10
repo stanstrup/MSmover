@@ -30,7 +30,7 @@ public sealed class MainForm : Form
     {
         _service = service;
 
-        Text = "MSmover";
+        Text = AppInfo.TitleBarText;
         Icon = TrayIcons.For(ServiceHealth.Idle);
         MinimumSize = new Size(900, 520);
         Size = new Size(1180, 720);

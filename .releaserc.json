@@ -1,0 +1,85 @@
+{
+  "branches": ["main"],
+  "tagFormat": "v${version}",
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits",
+        "releaseRules": [
+          { "type": "docs", "release": "patch" },
+          { "type": "refactor", "release": "patch" },
+          { "type": "perf", "release": "patch" },
+          { "type": "build", "release": "patch" },
+          { "type": "ci", "release": false },
+          { "type": "test", "release": false },
+          { "type": "chore", "release": false }
+        ]
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits",
+        "presetConfig": {
+          "types": [
+            { "type": "feat", "section": "Features" },
+            { "type": "fix", "section": "Bug fixes" },
+            { "type": "perf", "section": "Performance" },
+            { "type": "refactor", "section": "Refactoring" },
+            { "type": "docs", "section": "Documentation" },
+            { "type": "build", "section": "Build and packaging" },
+            { "type": "test", "section": "Tests", "hidden": true },
+            { "type": "ci", "section": "CI", "hidden": true },
+            { "type": "chore", "hidden": true }
+          ]
+        }
+      }
+    ],
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "CHANGELOG.md",
+        "changelogTitle": "# Changelog\n\nAll notable changes to MSmover. Generated from the commit history by semantic-release; do not edit by hand."
+      }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "pwsh -NoProfile -File build/package.ps1 -Version ${nextRelease.version}"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          {
+            "path": "release/MSmover-*-win-x64-setup.exe",
+            "label": "Installer (Windows x64) - MSmover-${nextRelease.version}-win-x64-setup.exe"
+          },
+          {
+            "path": "release/MSmover-*-win-x64-setup.exe.sha256",
+            "label": "Installer SHA-256 checksum"
+          },
+          {
+            "path": "release/MSmover-*-win-x64.exe",
+            "label": "Portable executable (Windows x64) - MSmover-${nextRelease.version}-win-x64.exe"
+          },
+          {
+            "path": "release/MSmover-*-win-x64.exe.sha256",
+            "label": "Portable SHA-256 checksum"
+          }
+        ],
+        "successComment": false,
+        "failComment": false
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["CHANGELOG.md"],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ]
+  ]
+}
