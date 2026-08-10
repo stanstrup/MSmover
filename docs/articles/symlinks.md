@@ -92,20 +92,52 @@ next scan. You never end up with an empty original location.
 ## Living with symlinks
 
 **MSmover never re-processes its own links.** The completion gate drops reparse points, so a linked
-file is not queued again. The old script needed `clear_symlink_folders.bat` for this; you do not.
+file is not queued again.
 
 **Writing through a link writes over SMB.** Reading archived data is the intended use. If something
 later opens the path for writing, it will be writing to the share.
 
-**File links, not directory links.** The old batch script used `mklink /D` because its targets were
-Waters `.raw` folders. MSmover creates file symlinks, which is what a single-file `.raw` needs.
-
 **Deleting the link does not delete the data.** It removes only the link. Conversely, deleting the
-file on the share leaves a dangling link behind.
+file on the share leaves a dangling link behind — see [clearing links out
+again](#clearing-links-out-again).
 
 **Backup software may or may not follow them.** Check before assuming the instrument PC's backup
 still covers the data — usually it should not, since the point is that the archive is now on the
 network.
+
+---
+
+## Clearing links out again
+
+Links accumulate. Eventually you want the instrument PC's folders genuinely empty — the archive is
+on the share, the links have served their purpose, and a few thousand of them make the folder
+tedious to work with. Or a share was reorganised and half the links now dangle.
+
+**Rules → select the rule → Clear symlinks…**
+
+The dialog lists every symbolic link under the rule's source folder, with what each one points at,
+and lets you delete the ones you tick.
+
+| Filter | Effect |
+|---|---|
+| Only links pointing into this rule's target folder | On by default. Leaves alone any link that was not created by this rule. |
+| Only broken links (target missing) | The tidy-up-after-a-reorganisation case. Broken links are also shown in red. |
+| Include sub-folders | Defaults to the rule's own recursive setting. |
+
+Two safety properties, both of them checked rather than assumed:
+
+* **It only ever deletes reparse points**, and it re-tests that attribute immediately before each
+  delete. A path that stopped being a link between the scan and the click is skipped and reported,
+  not deleted. A real data file can never be removed by this tool.
+* **Deleting a link never touches what it points at.** Directory links are removed
+  non-recursively, so the link goes and the folder it referred to does not.
+
+Everything removed is written to the log with a count, and anything that could not be removed is
+listed with the reason.
+
+> [!TIP]
+> Run it once with **Only broken links** ticked before doing anything else. If that finds a lot,
+> something moved on the share and it is worth understanding what before clearing the rest.
 
 ## If you would rather not
 

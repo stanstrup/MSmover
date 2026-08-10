@@ -73,7 +73,7 @@ Given `MSTEST_A01_003.raw`, acquired 2026-03-14 15:09.
 MSTEST_A01_003.raw
 ```
 
-### The Waters layout (what the old batch script did)
+### A project folder containing a nested project structure
 
 ```text
 Delimiter            _
@@ -210,12 +210,11 @@ shallow if anything downstream is old.
 ## Combining with the index file
 
 Set **Index file** on the rule (e.g. `msmover_index.tsv`) to append one row per completed transfer
-at the target root. It is the successor to the old script's `raw_filelist.txt`, with rather more in
-it:
+at the target root:
 
 ```text
 timestamp             rule        target                                    size      hash                        source
 2026-03-14 15:12:03   Thermo raw  MSTEST\MSTEST.pro\Data\MSTEST_A01_003.raw 1288490188 xxhash64:b2baad2182f1b1ab  D:\Data\MSTEST_A01_003.raw
 ```
 
-Tab-separated with a header, so `readr::read_tsv()` picks it up directly.
+Tab-separated with a header, so it opens directly in a spreadsheet or any TSV reader.

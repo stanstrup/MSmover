@@ -22,7 +22,7 @@
     ],
     "resource": [
       {
-        "files": [ "images/**" ],
+        "files": [ "images/**", "logo.svg", "favicon.ico" ],
         "exclude": [ "_site/**", "obj/**" ]
       }
     ],
@@ -32,6 +32,8 @@
     "globalMetadata": {
       "_appName": "MSmover",
       "_appTitle": "MSmover",
+      "_appLogoPath": "logo.svg",
+      "_appFaviconPath": "favicon.ico",
       "_appFooter": "MSmover &mdash; verified transfer of LC-MS raw data. MIT licensed.",
       "_enableSearch": true,
       "_disableContribution": false,

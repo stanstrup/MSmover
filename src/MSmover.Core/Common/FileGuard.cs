@@ -4,8 +4,7 @@ namespace MSmover.Core.Common;
 /// The primary "is this file finished?" probe.
 ///
 /// Thermo Xcalibur holds the .raw file open for the whole acquisition, so an exclusive
-/// open is the strongest single signal we have. This replaces the old batch script's
-/// per-file <c>powershell [System.IO.File]::Open(...,'Write')</c> spawn.
+/// open is the strongest single signal we have.
 /// </summary>
 public static class FileGuard
 {
@@ -38,9 +37,8 @@ public static class FileGuard
     }
 
     /// <summary>
-    /// True for symlinks, junctions and any other reparse point. Mirrors the old script's
-    /// <c>fsutil reparsepoint query | find "Symbolic Link"</c> guard: without it the tool
-    /// would happily re-process the symlinks it created itself.
+    /// True for symlinks, junctions and any other reparse point. Without this check the tool
+    /// would happily re-process the symlinks it created itself, in a loop.
     /// </summary>
     public static bool IsReparsePoint(string path)
     {

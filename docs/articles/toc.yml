@@ -10,5 +10,3 @@
   href: symlinks.md
 - name: Troubleshooting
   href: troubleshooting.md
-- name: Why not rsync
-  href: rsync.md

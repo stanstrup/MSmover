@@ -97,22 +97,12 @@ A `start` with no matching terminal record means the transfer was interrupted. O
 those part files are deleted — a part file is by definition incomplete and unverified, so removing
 it can never lose data.
 
-Reading it in R:
-
-```r
-library(jsonlite)
-j <- stream_in(file("~/AppData/Roaming/MSmover/journal.jsonl"))
-subset(j, Event == "done")
-```
+One object per line, so it streams into any JSON-lines reader without loading the whole file.
 
 ## `msmover_index.tsv`
 
-Optional, written at the target root when **Index file** is set. Successor to the old script's
-`raw_filelist.txt`. Tab-separated with a header, so it reads directly:
-
-```r
-readr::read_tsv("//storage/ms/incoming/msmover_index.tsv")
-```
+Optional, written at the target root when **Index file** is set. Tab-separated with a header, so
+it opens directly in a spreadsheet or any TSV reader.
 
 ```text
 timestamp             rule        target                                      size        hash                       source

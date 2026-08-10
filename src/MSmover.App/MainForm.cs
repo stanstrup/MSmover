@@ -121,6 +121,7 @@ public sealed class MainForm : Form
         buttons.Controls.Add(Button("Remove", RemoveRule));
         buttons.Controls.Add(Button("Enable / disable", ToggleRuleEnabled));
         buttons.Controls.Add(Button("Preview (dry pass)...", PreviewSelectedRule));
+        buttons.Controls.Add(Button("Clear symlinks...", ClearSymlinksForSelectedRule));
 
         page.Controls.Add(_rulesList);
         page.Controls.Add(buttons);
@@ -516,6 +517,26 @@ public sealed class MainForm : Form
 
         using var preview = new PreviewForm(rule);
         preview.ShowDialog(this);
+    }
+
+    private void ClearSymlinksForSelectedRule()
+    {
+        var rule = SelectedRule();
+        if (rule is null)
+        {
+            MessageBox.Show("Select a rule first.", "MSmover", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(rule.SourceFolder))
+        {
+            MessageBox.Show("This rule has no source folder set.", "MSmover",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        using var cleanup = new SymlinkCleanupForm(rule, _service.Log);
+        cleanup.ShowDialog(this);
     }
 
     private void ApplyConfigChange()

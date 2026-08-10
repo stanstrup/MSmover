@@ -30,11 +30,10 @@ public sealed class MapResult
 /// <summary>
 /// Turns a source file name into a target sub-path.
 ///
-/// This is the generalisation of win_waters_mover.bat, which hardcoded
-/// <c>&lt;out&gt;\%%a\%%a.pro\Data\%%~nxi</c> where %%a was token 1 of the name split on "_",
-/// and rejected names that did not have exactly the expected number of delimiters.
-/// The same behaviour is now the template <c>{t1}\{t1}.pro\Data\{filename}</c> with
-/// ExpectedDelimiterCount = 2.
+/// A template such as <c>{t1}\{t1}.pro\Data\{filename}</c> combined with
+/// ExpectedDelimiterCount = 2 routes <c>MSTEST_A01_003.raw</c> to
+/// <c>MSTEST\MSTEST.pro\Data\MSTEST_A01_003.raw</c>, and rejects any name that does not split
+/// into exactly three parts.
 ///
 /// Pure string logic on purpose: the rule editor's live preview calls it with a filename the
 /// user is typing, which need not exist on disk.

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="MSmover">
+  <title>MSmover</title>
+  <defs>
+    <linearGradient id="msmover-badge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#60A5FA"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#msmover-badge)"/>
+
+  <!-- Spectrum peaks rising from a baseline that doubles as an arrow shaft. -->
+  <g stroke="#ffffff" stroke-width="5" stroke-linecap="round" fill="none">
+    <path d="M16 45V16"/>
+    <path d="M25 45V29"/>
+    <path d="M34 45V21"/>
+    <path d="M14 45H41"/>
+  </g>
+  <path d="M40 37.5 52 45 40 52.5Z" fill="#ffffff"/>
+</svg>

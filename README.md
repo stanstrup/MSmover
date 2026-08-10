@@ -4,9 +4,6 @@ A Windows tray application that watches an LC-MS instrument's acquisition folder
 finished `.raw` files to a network drive — safely, with byte-level verification before anything is
 deleted.
 
-Successor to the `watchexec` + batch script in `QC4Metabolomics/file_mover`, adapted from Waters
-`.raw` **folders** to Thermo `.raw` **files**.
-
 - Single self-contained `.exe` (~68 MB). No .NET runtime, no installer, no admin to run.
 - Tray icon, multiple named rules, dry run, pause, live log.
 - **Copy → read back from the destination → compare hashes → only then delete the source.**
@@ -54,7 +51,7 @@ exactly why the file would be skipped. Use it before arming anything.
 | `{g:name}` | named capture group from the include regex |
 | `{machine}` `{rulename}` | host name, rule name |
 
-The old script's Waters layout is the preset:
+For example:
 
 ```
 Delimiter            _
@@ -64,7 +61,7 @@ Template             {t1}\{t1}.pro\Data\{filename}
 MSTEST_A01_003.raw  ->  MSTEST\MSTEST.pro\Data\MSTEST_A01_003.raw
 ```
 
-Names with the wrong delimiter count are skipped and logged, exactly as before
+Names with the wrong delimiter count are skipped and logged
 (*"Filename check: too few delimiters. File ignored."*).
 
 ### Recommended rollout
@@ -163,21 +160,15 @@ tray icon goes red, and the log explains what to fix. Nothing is moved in the me
 
 ---
 
-## Why not rsync
+## Clearing symlinks out again
 
-- Every working rsync on Windows (cwRsync, MSYS2, Git-for-Windows) needs the Cygwin/MSYS runtime,
-  which breaks the no-dependencies requirement.
-- rsync does not accept UNC paths; it would need `net use Z:` first, which is fragile at login
-  before the network is up.
-- The delta algorithm buys nothing here. These are brand-new files with no prior version at the
-  destination, so rsync degrades to a whole-file copy with a worse error surface.
+**Rules → Clear symlinks…** lists every symbolic link under a rule's source folder, with what each
+one points at, and removes the ones you tick. Filters for "only links into this rule's target" and
+"only broken links" make it usable both for routine tidying and for cleaning up after a share was
+reorganised.
 
-A native chunked copy plus an independent read-back hash is a *stronger* guarantee than rsync
-without `--checksum`.
-
-If you want an external copier anyway, set **External copy command** on a rule
-(`{src}` and `{dst}` placeholders, e.g. `robocopy` or an rsync binary). Verification still runs
-afterwards, so the safety properties above are preserved.
+It only ever deletes reparse points — re-checked immediately before each delete — and removing a
+link never touches the file it points at.
 
 ---
 
@@ -192,8 +183,7 @@ afterwards, so the safety properties above are preserved.
 The journal is also how the app knows what it has already transferred, so restarting does not
 re-report every file it has ever copied. **Scan now** clears that and re-evaluates everything.
 
-Set **Index file** on a rule to also append a TSV at the target root — the successor to the old
-`raw_filelist.txt`.
+Set **Index file** on a rule to also append a TSV of completed transfers at the target root.
 
 ---
 

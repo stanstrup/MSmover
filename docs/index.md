@@ -8,8 +8,6 @@ title: MSmover
 network drive — safely, with byte-level verification before anything is deleted.**
 
 A single self-contained `.exe`. No .NET runtime, no installer, no admin rights to run.
-Successor to the `watchexec` + batch script in `QC4Metabolomics/file_mover`, adapted from Waters
-`.raw` *folders* to Thermo `.raw` *files*.
 
 <div class="row">
 <div class="col-md-6">
@@ -28,7 +26,8 @@ Successor to the `watchexec` + batch script in `QC4Metabolomics/file_mover`, ada
 
 * [Regex cookbook](cookbooks/regex.md) — patterns for selecting files
 * [Template cookbook](cookbooks/templates.md) — filename → destination path
-* [Migrating from `file_mover`](cookbooks/migrating.md) — the old batch script, translated
+* [Symlinks](articles/symlinks.md) — links back to moved data, and clearing them
+* [Troubleshooting](articles/troubleshooting.md) — why a file is not moving
 
 </div>
 </div>

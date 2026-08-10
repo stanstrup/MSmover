@@ -51,7 +51,7 @@ Covered in full in [When is a file finished?](completion.md).
 | Setting | Default | Notes |
 |---|---|---|
 | **Delimiter** | `_` | Splits the base name into `{t1}`, `{t2}`, … |
-| **Require exactly N delimiters** | off | Rejects malformed names. Reproduces the old script's check. |
+| **Require exactly N delimiters** | off | Rejects malformed names before they are filed. |
 | **Target template** | `{filename}` | See the [template cookbook](../cookbooks/templates.md). |
 | **Date tokens from** | `FileModified` | Or `Now`, to stamp with the transfer time instead. |
 
@@ -74,7 +74,7 @@ Covered in full in [When is a file finished?](completion.md).
 | **Parallel transfers** | 1 | Also capped by **Max concurrent transfers** in Settings. |
 | **Full rescan every** | 300 s | The fallback behind `FileSystemWatcher`. Not optional; the watcher drops events. |
 | **Delete empty source folders** | off | Move mode, recursive. Never removes the source root itself. |
-| **Index file** | empty | A TSV appended at the target root. Successor to `raw_filelist.txt`. |
+| **Index file** | empty | A TSV of completed transfers, appended at the target root. |
 | **External copy command** | empty | Run something else as the copier — see below. |
 
 ## The external copy command
@@ -113,3 +113,4 @@ Grey means disabled, amber paused, red faulted.
 | **Remove** | Deletes the rule. No files are affected. |
 | **Enable / disable** | Toggles. Validates first, and asks for confirmation before arming a real Move. |
 | **Preview (dry pass)…** | Walks the source folder now and shows what would happen to each file. Read-only. |
+| **Clear symlinks…** | Lists the symbolic links under the source folder and lets you remove them. See [Symlinks](symlinks.md#clearing-links-out-again). |

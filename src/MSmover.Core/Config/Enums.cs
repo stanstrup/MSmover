@@ -35,7 +35,7 @@ public enum HashKind
 
 public enum OnTargetExists
 {
-    /// <summary>Log a warning, leave the source alone, do nothing. Matches the old script.</summary>
+    /// <summary>Log a warning, leave the source alone, do nothing.</summary>
     Skip
 }
 

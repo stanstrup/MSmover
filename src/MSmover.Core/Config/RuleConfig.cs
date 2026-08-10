@@ -20,13 +20,13 @@ public sealed class RuleConfig
 
     public TransferMode Mode { get; set; } = TransferMode.Copy;
 
-    // ---- filename -> sub-path mapping (generalises the old win_waters_mover.bat) ----
+    // ---- filename -> sub-path mapping ----
 
     public string Delimiter { get; set; } = "_";
 
     /// <summary>
     /// Null disables the check. When set, a file whose base name does not contain exactly this
-    /// many delimiters is skipped, reproducing the old script's "too few/too many delimiters".
+    /// many delimiters is skipped, with a "too few/too many delimiters" reason.
     /// </summary>
     public int? ExpectedDelimiterCount { get; set; }
 
@@ -43,8 +43,8 @@ public sealed class RuleConfig
     public long MinSizeBytes { get; set; } = 1024;
 
     /// <summary>
-    /// Optional companion-file guard, the generic form of the old script's "no .IDX yet means the
-    /// run has not really started". Supports {basename} and {filename}, e.g. "{basename}.sld".
+    /// Optional companion-file guard, for acquisitions that only become valid once a marker file
+    /// appears alongside them. Supports {basename} and {filename}, e.g. "{basename}.sld".
     /// </summary>
     public string RequireSiblingGlob { get; set; } = "";
 
@@ -63,11 +63,11 @@ public sealed class RuleConfig
 
     public bool DeleteEmptySourceDirs { get; set; }
 
-    /// <summary>Optional TSV appended at the target root; successor to raw_filelist.txt.</summary>
+    /// <summary>Optional TSV of completed transfers, appended at the target root.</summary>
     public string IndexFile { get; set; } = "";
 
     /// <summary>
-    /// Escape hatch: run an external copier (robocopy, rsync, ...) instead of the built-in one.
+    /// Escape hatch: run an external copier instead of the built-in one.
     /// Placeholders {src} and {dst}. Verification still runs afterwards.
     /// </summary>
     public string ExternalCommand { get; set; } = "";

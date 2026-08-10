@@ -13,8 +13,7 @@ A file becomes eligible only when **all** of these hold.
 ### 1. Not a reparse point
 
 Symlinks, junctions and any other reparse point are dropped outright. Without this the tool would
-re-process the symlinks it created itself, in a loop. This replaces the old script's
-`fsutil reparsepoint query | find "Symbolic Link"` guard.
+re-process the symlinks it left behind after a move, in a loop.
 
 ### 2. At least `MinSizeBytes`
 
@@ -26,10 +25,10 @@ Default 60 seconds.
 
 ### 4. The optional companion file exists
 
-`RequireSiblingGlob`, e.g. `{basename}.sld`. This is the general form of the old script's
-*"if no `.IDX` exists yet the run has not really started"* rule. Usually unnecessary for a
-self-contained single-file format — leave it empty unless your acquisition really does produce a
-marker file you can key on.
+`RequireSiblingGlob`, e.g. `{basename}.sld`. For formats where the data file appears immediately
+but only becomes valid once a companion file is written, this holds the transfer back until that
+marker exists. Usually unnecessary for a self-contained single-file format — leave it empty unless
+your acquisition really does produce a file you can key on.
 
 ### 5. Size unchanged across N consecutive probes
 

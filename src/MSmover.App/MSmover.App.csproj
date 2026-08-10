@@ -10,6 +10,7 @@
     <RootNamespace>MSmover.App</RootNamespace>
     <AssemblyName>MSmover</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>msmover.ico</ApplicationIcon>
     <Version>0.1.0</Version>
     <Product>MSmover</Product>
     <Description>Watches an LC-MS acquisition folder and moves finished .raw files to a network drive, with verification.</Description>

@@ -95,8 +95,7 @@ Move rule with dry run off asks again.
 ## Collisions
 
 If a file already exists at the resolved target, MSmover logs a warning, leaves both files exactly
-as they are, and marks the item **Blocked**. This is the old script's policy
-(*"raw folder already exists! Folder ignored."*) and the only policy implemented — there is
+as they are, and marks the item **Blocked**. This is the only policy implemented — there is
 deliberately no overwrite option.
 
 Resolve it yourself, then press **Scan now** to re-evaluate.
@@ -125,4 +124,4 @@ target, part path, size, hash, mode, outcome, timestamp. It rotates at 20 MB.
 {"Ts":"2026-03-14T15:12:03.4+01:00","Event":"done","Rule":"Thermo raw","Source":"D:\\Data\\MSTEST_A01_003.raw","Target":"\\\\storage\\ms\\MSTEST\\MSTEST.pro\\Data\\MSTEST_A01_003.raw","Size":1288490188,"Hash":"b2baad2182f1b1ab","Mode":"MOVE"}
 ```
 
-Readable in R with `jsonlite::stream_in(file("journal.jsonl"))`.
+One object per line, so it streams into any JSON-lines reader without loading the whole file.

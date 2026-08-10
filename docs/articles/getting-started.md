@@ -63,7 +63,7 @@ the current contents of the source folder and shows a table:
 | `QC_A01_009.raw` | 1.1 GB | 2026-03-14 15:44 | wait | still open in another process — probably still being acquired |
 
 Nothing is opened for writing and nothing is created. **Copy to clipboard** gives you the same
-table as TSV if you want to check it in R.
+table as tab-separated text, for pasting into a spreadsheet or a ticket.
 
 The running rule also logs `DRY RUN  WOULD COPY …` lines for everything it would have done, so you
 can leave it in dry run over a few real acquisitions and read the log afterwards.
@@ -104,4 +104,4 @@ untouched, and the next launch cleans up any leftover `.msmover-part` file.
 * [Rules explained](rules.md) — every setting
 * [Regex cookbook](../cookbooks/regex.md) — choosing which files to act on
 * [Template cookbook](../cookbooks/templates.md) — deciding where they go
-* [Migrating from `file_mover`](../cookbooks/migrating.md) — the old batch script, translated
+* [Safety model](safety.md) — what is guaranteed, and what is not

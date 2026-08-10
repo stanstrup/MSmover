@@ -294,7 +294,7 @@ public sealed class RuleRunner : IDisposable
 
         // A file matching neither the include nor the naming rules is not queued at all, so an
         // unrelated folder does not fill the UI with noise. Names that DO match the include regex
-        // but fail the naming rule are queued as Skipped, exactly as the old script reported them.
+        // but fail the naming rule are queued as Skipped, with the reason shown against the file.
         var map = PathMapper.Map(Rule, path, ChooseStamp(info.LastWriteTime));
         if (map.Verdict is MapVerdict.NotIncluded or MapVerdict.Excluded) return;
 

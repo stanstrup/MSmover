@@ -5,8 +5,8 @@ Two rule settings take a regular expression:
 * **Include regex** — a file is considered only if this matches. Empty means "match everything".
 * **Exclude regex** — a file is dropped if this matches. Empty means "exclude nothing".
 
-Both use the .NET regex flavour (`System.Text.RegularExpressions`), the same one behind
-`stringr`/`ICU` in spirit but not identical — see [differences from R](#if-you-come-from-r).
+Both use the .NET regex flavour (`System.Text.RegularExpressions`): PCRE-like, with `\d`, `\w`,
+named groups and lookaround. POSIX classes such as `[[:digit:]]` are **not** supported — use `\d`.
 
 > [!NOTE]
 > Every example on this page is asserted by the test suite
@@ -77,6 +77,33 @@ If you hand-edit `config.json`, double every backslash. `\d` becomes `\\d`, `\.`
 | `.raw` or `.mzML` | `(?i)\.(raw\|mzML)$` |
 | Six or more characters before the first underscore | `(?i)^[^_]{6,}_.*\.raw$` |
 
+### Reading one of those, piece by piece
+
+The fourth row above is the most involved. It says "a project name, an underscore, a well position,
+an underscore, an injection number, then `.raw` — and nothing else".
+
+```regex
+(?i)^[^_]+_[A-H]\d{2}_\d+\.raw$
+```
+
+| Piece | Reads as | Matches | Does not match |
+|---|---|---|---|
+| `(?i)` | ignore case from here on | `.RAW`, `.raw` | — |
+| `^` | start of the name | — | anything with text before the project |
+| `[^_]+` | one or more characters that are **not** an underscore | `PLASMA` | `PLASMA_X` (the split would be wrong) |
+| `_` | a literal underscore | | |
+| `[A-H]` | exactly one letter from A to H | `C` | `Z`, `c` — well, `c` matches here only because of `(?i)` |
+| `\d{2}` | exactly two digits | `03` | `3`, `003` |
+| `_` | a literal underscore | | |
+| `\d+` | one or more digits | `011`, `7` | `A11` |
+| `\.raw` | a literal dot, then `raw` | `.raw` | `Xraw` |
+| `$` | end of the name | — | `PLASMA_C03_011.raw.bak` |
+
+Read that way, `PLASMA_C03_011.raw` matches and `PLASMA_Z99_011.raw` does not, because `Z` is
+outside `[A-H]`. That is the point of writing it out rather than using `.*`: the pattern rejects a
+well position that cannot exist on a 96-well plate, so a typo in the sequence gets caught rather
+than filed.
+
 ## Excluding files
 
 Exclude is evaluated after include and **wins**. It is usually clearer than building negation into
@@ -96,8 +123,19 @@ the include pattern.
 (?i)^(?!blank|wash|std)[^_]+_[A-H]\d{2}_\d+\.raw$
 ```
 
-`(?!…)` asserts "not followed by". It works, but two readable patterns beat one clever one — and
-the Queue tab tells you which of the two rejected a file only when they are separate.
+| Piece | Reads as |
+|---|---|
+| `^` | at the start of the name… |
+| `(?!blank\|wash\|std)` | …assert that what follows is **not** `blank`, `wash` or `std`. Consumes nothing — the cursor stays at position 0. |
+| `[^_]+_[A-H]\d{2}_\d+\.raw$` | …then match the ordinary pattern from there |
+
+The "consumes nothing" part is what makes lookahead confusing. `(?!…)` is a *check* at the current
+position, not a piece of the name. So after it, `[^_]+` still starts matching at the very beginning
+— which is why `BLANK_A01_003.raw` fails (the check rejects it) but `PLASMA_A01_003.raw` passes and
+then matches from `P`.
+
+It works, but two readable patterns beat one clever one, and when include and exclude are separate
+the Queue tab can tell you which of them rejected a file.
 
 ---
 
@@ -108,9 +146,22 @@ This is the most powerful routing mechanism MSmover has.
 
 ### Project / plate / injection
 
+This is the pattern from [Reading one of those, piece by piece](#reading-one-of-those-piece-by-piece)
+with names wrapped around the three interesting parts. Wrapping a piece in `(?<name>…)` changes
+nothing about what the pattern matches — it only gives that piece a label you can use later.
+
 ```regex
 (?i)^(?<proj>[^_]+)_(?<plate>[A-H]\d{2})_(?<inj>\d+)\.raw$
 ```
+
+| Group | Pattern inside it | For `PLASMA_C03_011.raw` | Template token |
+|---|---|---|---|
+| `proj` | `[^_]+` — everything up to the first underscore | `PLASMA` | `{g:proj}` |
+| `plate` | `[A-H]\d{2}` — a well position | `C03` | `{g:plate}` |
+| `inj` | `\d+` — the injection number | `011` | `{g:inj}` |
+
+Note `inj` is captured but not used below. Capturing something you do not route on is fine and
+often worth doing: it documents the name format, and it is there the day you want it.
 
 ```text
 Template   {g:proj}\{g:plate}\{filename}
@@ -126,6 +177,18 @@ group giving `20260314` cannot be sliced afterwards.
 ```regex
 ^(?<y>\d{4})(?<m>\d{2})(?<d>\d{2})_(?<proj>[^_]+)_.*\.raw$
 ```
+
+The three date groups sit directly against each other with no separator between them. That works
+because each one is a **fixed width**: `\d{4}` takes exactly four digits, so `\d{2}` after it can
+only start at the fifth. Without the `{4}` and `{2}` counts, `\d+` would swallow the whole date.
+
+| Group | Pattern | For `20260314_PLASMA_003.raw` |
+|---|---|---|
+| `y` | `\d{4}` | `2026` |
+| `m` | `\d{2}` | `03` |
+| `d` | `\d{2}` | `14` |
+| `proj` | `[^_]+` after the underscore | `PLASMA` |
+| — | `_.*\.raw$` — whatever is left, then the extension | `_003.raw` |
 
 ```text
 Template   {g:y}\{g:m}\{g:d}\{g:proj}\{filename}
@@ -206,23 +269,6 @@ and both are available to the template.
 That difference matters when debugging: **if a file is missing from the queue entirely, the include
 regex rejected it.** If it is present but Skipped, the include regex matched and something later
 went wrong.
-
----
-
-## If you come from R
-
-.NET regex is close to PCRE and differs from R's default in a few ways worth knowing:
-
-| | R (`stringr`/ICU, or `perl = TRUE`) | .NET / MSmover |
-|---|---|---|
-| Named groups | `(?<name>…)` | `(?<name>…)` — same |
-| Case-insensitive | `regex(x, ignore_case = TRUE)` | inline `(?i)` at the start of the pattern |
-| Escaping in source | `"\\.raw$"` in R code | `\.raw$` in the GUI, `"\\.raw$"` in `config.json` |
-| POSIX classes | `[[:digit:]]` | not supported — use `\d` |
-| Anchoring | `str_detect` is unanchored too | unanchored |
-
-The most common porting mistake is carrying `[[:alpha:]]`-style POSIX classes across. Use `\d`,
-`\w`, `\s` and explicit ranges such as `[A-Za-z]`.
 
 ---
 

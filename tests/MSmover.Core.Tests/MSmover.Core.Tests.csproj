@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <RootNamespace>MSmover.Core.Tests</RootNamespace>
+    <!-- Needed by the form smoke tests, which construct the real WinForms dialogs. -->
+    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MSmover.Core\MSmover.Core.csproj" />
+    <ProjectReference Include="..\..\src\MSmover.App\MSmover.App.csproj" />
   </ItemGroup>
 
 </Project>
